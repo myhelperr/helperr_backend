@@ -1,0 +1,61 @@
+{
+  "name": "helperr_backend",
+  "version": "1.0.0",
+  "description": "backend api for helperr infra",
+  "main": "server.js",
+  "scripts": {
+    "migrate:deploy": "npx prisma migrate deploy",
+    "migrate:dev": "npx prisma migrate dev --name $(date +%Y%m%d_%H%M%S)",
+    "studio": "npx prisma studio",
+    "generate": "npx prisma generate",
+    "dev": "npm run generate && nodemon --watch src/**/*.ts --exec ts-node src/server.ts",
+    "prod": "npm run build && cross-env NODE_ENV=prod node dist/server.js",
+    "build": "npm run generate && tsc && npm run sentry:sourcemaps",
+    "lint": "eslint src/**/*.ts",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org nnaemeka-bethrand --project my_helperr ./dist && sentry-cli sourcemaps upload --org nnaemeka-bethrand --project my_helperr ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myhelperr/helperr_backend.git"
+  },
+  "keywords": [
+    "helperr",
+    "api"
+  ],
+  "author": "helperr_dev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/myhelperr/helperr_backend/issues"
+  },
+  "homepage": "https://github.com/myhelperr/helperr_backend#readme",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/express-rate-limit": "^5.1.3",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.5.2",
+    "@types/nodemailer": "^7.0.2",
+    "eslint": "^9.36.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "@sentry/cli": "^2.56.1",
+    "@sentry/node": "^10.19.0",
+    "@supabase/supabase-js": "^2.75.0",
+    "cors": "^2.8.5",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "http-errors": "^2.0.0",
+    "morgan": "^1.10.1",
+    "nodemailer": "^7.0.9",
+    "prisma": "^6.17.1",
+    "winston": "^3.18.1",
+    "winston-daily-rotate-file": "^5.0.0"
+  }
+}

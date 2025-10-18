@@ -1,0 +1,78 @@
+{
+  // Production-ready TypeScript configuration for Node.js
+  "compilerOptions": {
+    // File Layout - Essential for production builds
+    "rootDir": "./src",
+
+    "outDir": "./dist",
+
+    // Environment Settings for Node.js
+    "module": "commonjs",
+
+    "target": "es2020",
+    "lib": ["es2020"],
+    "types": ["node"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Output Configuration
+    "sourceMap": true,
+
+    "declaration": false,
+    "declarationMap": false,
+    "removeComments": true,
+
+    // Strict Type Checking (Production Ready)
+    "strict": true,
+
+    // "noUncheckedIndexedAccess": true,
+    // "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+
+    // "noImplicitOverride": true,
+    "noUnusedLocals": true,
+
+    "noUnusedParameters": true,
+
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Module System
+    "isolatedModules": true,
+
+    "verbatimModuleSyntax": false,
+    "moduleDetection": "auto",
+    "allowImportingTsExtensions": false,
+
+    // Performance & Compatibility
+    "skipLibCheck": true,
+
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    // Additional Production Optimizations
+    "incremental": true,
+
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "inlineSources": true,
+
+    // Set `sourceRoot` to  "/" to strip the build path prefix
+    // from generated source code references.
+    // This improves issue grouping in Sentry.
+    "sourceRoot": "/"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
+  }
+}

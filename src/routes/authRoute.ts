@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SignUp, VerifyOTP, ResendOTP, Login, GetProfile, RefreshToken, ForgotPassword, VerifyPasswordResetOTP, ResetPassword } from '../controllers/authController';
+import { SignUp, VerifyOTP, ResendOTP, Login, GetProfile, RefreshToken, ForgotPassword, VerifyPasswordResetOTP, ResetPassword, UpdateProfile } from '../controllers/authController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -21,5 +21,7 @@ router.post('/verify-password-reset', VerifyPasswordResetOTP);
 router.post('/reset-password', ResetPassword);
 
 router.get('/get-profile', authMiddleware, GetProfile);
+
+router.patch('/update-profile', authMiddleware, UpdateProfile);
 
 export default router;

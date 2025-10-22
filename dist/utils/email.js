@@ -1,0 +1,421 @@
+"use strict";
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cde11614-3f8c-52f2-b42d-ce1ae4161e5f")}catch(e){}}();
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendPasswordResetEmail = exports.resendOtpEmail = exports.sendOtpEmail = void 0;
+const nodemailer_1 = require("nodemailer");
+const envConfig_1 = require("../configs/envConfig");
+const loggerConfig_1 = require("../configs/loggerConfig");
+const createEmailTransporter = () => {
+    return (0, nodemailer_1.createTransport)({
+        service: "gmail",
+        auth: {
+            user: envConfig_1.EMAIL_USERNAME,
+            pass: envConfig_1.EMAIL_APP_PASSWORD,
+        },
+        tls: {
+            rejectUnauthorized: false,
+        },
+        debug: true,
+    });
+};
+const sendOtpEmail = async (name, email, otpCode) => {
+    const transporter = createEmailTransporter();
+    const mailOptions = {
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
+        to: email,
+        subject: "Verify your Helperr account - OTP Code",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Verify Your Account</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background-color: #f5f5f5;
+                    color: #333;
+                }
+                .container {
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    padding: 30px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .logo {
+                    width: 200px;
+                    margin: 0 auto 20px auto;
+                    display: block;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #6666ff;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .greeting {
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+                .message {
+                    font-size: 16px;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                    text-align: center;
+                }
+                .otp-box {
+                    background-color: #6666ff;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    text-align: center;
+                    margin: 25px 0;
+                }
+                .otp-code {
+                    font-size: 28px;
+                    font-weight: bold;
+                    letter-spacing: 3px;
+                    margin: 0;
+                }
+                .note {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #666;
+                    margin: 20px 0;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    color: #666;
+                    font-size: 14px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="https://res.cloudinary.com/dpesanzkk/image/upload/v1757285362/my-helperr-1_xxjt9m.jpg" 
+                         alt="Helperr Logo" class="logo">
+                </div>
+                
+                <div class="greeting">Hello ${name}!</div>
+                
+                <div class="message">
+                    Welcome to Helperr! Please use the code below to verify your account:
+                </div>
+                
+                <div class="otp-box">
+                    <div class="otp-code">${otpCode}</div>
+                </div>
+                
+                <div class="note">
+                    This code expires in 10 minutes. Don't share it with anyone.
+                </div>
+                
+                <div class="footer">
+                    Best regards,<br>
+                    The Helperr Team
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    };
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending OTP email to ${email}: ${error}`);
+    }
+};
+exports.sendOtpEmail = sendOtpEmail;
+const resendOtpEmail = async (name, email, otpCode) => {
+    const transporter = createEmailTransporter();
+    const mailOptions = {
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
+        to: email,
+        subject: "Resend OTP Verification Code",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New Verification Code</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background-color: #f5f5f5;
+                    color: #333;
+                }
+                .container {
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    padding: 30px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .logo {
+                    width: 200px;
+                    margin: 0 auto 20px auto;
+                    display: block;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #6666ff;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .greeting {
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+                .message {
+                    font-size: 16px;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                    text-align: center;
+                }
+                .otp-box {
+                    background-color: #6666ff;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    text-align: center;
+                    margin: 25px 0;
+                }
+                .otp-code {
+                    font-size: 28px;
+                    font-weight: bold;
+                    letter-spacing: 3px;
+                    margin: 0;
+                }
+                .note {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #666;
+                    margin: 20px 0;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    color: #666;
+                    font-size: 14px;
+                }
+                .resend-notice {
+                    background-color: #fff3cd;
+                    border: 1px solid #ffeaa7;
+                    padding: 15px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #856404;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="https://res.cloudinary.com/dpesanzkk/image/upload/v1757285362/my-helperr-1_xxjt9m.jpg" 
+                         alt="Helperr Logo" class="logo">
+                </div>
+                
+                <div class="greeting">Hello ${name}!</div>
+                
+                <div class="message">
+                   🔄 This is a new verification code as requested
+                </div>
+                
+                <div class="otp-box">
+                    <div class="otp-code">${otpCode}</div>
+                </div>
+                
+                <div class="note">
+                    This new code expires in 10 minutes and replaces any previous codes. Don't share it with anyone.
+                </div>
+                
+                <div class="footer">
+                    Having trouble? Contact our support team.<br>
+                    Best regards,<br>
+                    The Helperr Team
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    };
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`Resend OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending resend OTP email to ${email}: ${error}`);
+    }
+};
+exports.resendOtpEmail = resendOtpEmail;
+const sendPasswordResetEmail = async (name, email, otpCode) => {
+    const transporter = createEmailTransporter();
+    const mailOptions = {
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
+        to: email,
+        subject: "Reset Your Helperr Password - OTP Code",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Your Password</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background-color: #f5f5f5;
+                    color: #333;
+                }
+                .container {
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    padding: 30px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .logo {
+                    width: 200px;
+                    margin: 0 auto 20px auto;
+                    display: block;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #6666ff;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .greeting {
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+                .message {
+                    font-size: 16px;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                    text-align: center;
+                }
+                .otp-box {
+                    background-color: #6666ff;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    text-align: center;
+                    margin: 25px 0;
+                }
+                .otp-code {
+                    font-size: 28px;
+                    font-weight: bold;
+                    letter-spacing: 3px;
+                    margin: 0;
+                }
+                .note {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #666;
+                    margin: 20px 0;
+                }
+                .warning {
+                    background-color: #fff3cd;
+                    border: 1px solid #ffeaa7;
+                    padding: 15px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    color: #856404;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    color: #666;
+                    font-size: 14px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="https://res.cloudinary.com/dpesanzkk/image/upload/v1757285362/my-helperr-1_xxjt9m.jpg" 
+                         alt="Helperr Logo" class="logo">
+                </div>
+                
+                <div class="greeting">Hello ${name}!</div>
+                
+                <div class="message">
+                    We received a request to reset your Helperr account password. Use the code below to proceed:
+                </div>
+                
+                <div class="otp-box">
+                    <div class="otp-code">${otpCode}</div>
+                </div>
+                
+                <div class="note">
+                    This code expires in 10 minutes. Don't share it with anyone.
+                </div>
+                
+                <div class="warning">
+                    ⚠️ If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+                </div>
+                
+                <div class="footer">
+                    Need help? Contact our support team.<br>
+                    Best regards,<br>
+                    The Helperr Team
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    };
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`Password reset OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending password reset email to ${email}: ${error}`);
+    }
+};
+exports.sendPasswordResetEmail = sendPasswordResetEmail;
+//# sourceMappingURL=email.js.map
+//# debugId=cde11614-3f8c-52f2-b42d-ce1ae4161e5f

@@ -298,7 +298,6 @@ export const VerifyPasswordResetOTP = catchAsync(
 
 export const ResetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    
     const refreshToken = req.headers['refresh-token'];
 
     const { password, confirmPassword } = req.body;
@@ -312,9 +311,10 @@ export const ResetPassword = catchAsync(
     }
 
     // Refresh the session using only the refresh token
-    const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession({
-      refresh_token: refreshToken,
-    });
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.refreshSession({
+        refresh_token: refreshToken,
+      });
 
     if (sessionError || !sessionData.session) {
       return next(createError(401, 'Invalid or expired refresh token'));
@@ -329,14 +329,14 @@ export const ResetPassword = catchAsync(
 
     res.status(200).send({
       status: 'success',
-      message: 'Password reset successfully. You can now login with your new password.',
+      message:
+        'Password reset successfully. You can now login with your new password.',
     });
   },
 );
 
 export const UpdateProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    
     const email = req.user?.email;
     if (!email) {
       return next(createError(400, 'User email not found'));
@@ -344,25 +344,35 @@ export const UpdateProfile = catchAsync(
 
     const { fullName, homeAddress, skills, aboutMe, picture } = req.body;
 
-    //PROFILE UPDATE
-    const { error } = await supabase.auth.updateUser({
-      email,
-      data: {
-        fullName,
-        homeAddress,
-        skills,
-        aboutMe,
-        picture,
-      },
-    });
-
-    if (error) {
-      return next(createError(400, error.message));
+    // Validate that at least one field is being updated
+    if (!fullName && !homeAddress && !skills && !aboutMe && !picture) {
+      return next(createError(400, 'No fields to update'));
     }
+
+    // Update user in Prisma database
+    const updatedUser = await prisma.user.update({
+      where: { email },
+      data: { fullName, homeAddress, skills, aboutMe, picture },
+    });
 
     res.status(200).send({
       status: 'success',
       message: 'Profile updated successfully',
+      data: {
+        user: {
+          fullName: updatedUser.fullName,
+          homeAddress: updatedUser.homeAddress,
+          picture: updatedUser.picture,
+          skills: updatedUser.skills,
+          aboutMe: updatedUser.aboutMe,
+        },
+      },
     });
   },
 );
+
+// export const VerifyDocuments = catchAsync( async(req: Request, res: Response, next: NextFunction) => {
+
+//   // const { state, city, address, gender, IDType, IDImage} = req.body;
+
+// })

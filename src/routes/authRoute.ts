@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { SignUp, VerifyOTP, ResendOTP, Login, GetProfile, RefreshToken, ForgotPassword, VerifyPasswordResetOTP, ResetPassword, UpdateProfile } from '../controllers/authController';
-import { authMiddleware } from '../middlewares/authMiddleware';
+import { SignUp, VerifyOTP, ResendOTP, Login, GetProfile, RefreshToken, ForgotPassword, VerifyPasswordResetOTP, ResetPassword, UpdateProfile, VerifyDocuments, GetAllIdentityVerifications, UpdateIdentityVerificationStatus } from '../controllers/authController';
+import { adminAuthMiddleware, authMiddleware } from '../middlewares/authMiddleware';
+import { upload } from '../utils/imageUpload';
 
 const router = Router();
 
@@ -23,5 +24,11 @@ router.post('/reset-password', ResetPassword);
 router.get('/get-profile', authMiddleware, GetProfile);
 
 router.patch('/update-profile', authMiddleware, UpdateProfile);
+
+router.post('/verify-documents', authMiddleware, upload.single('documentImage'), VerifyDocuments );
+
+router.get('/get-verification-documents', adminAuthMiddleware, GetAllIdentityVerifications)
+
+router.patch('/update-verification-status/:verificationId', adminAuthMiddleware, UpdateIdentityVerificationStatus)
 
 export default router;

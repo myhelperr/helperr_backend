@@ -8,7 +8,9 @@ import {
   resendOtpEmail,
   sendOtpEmail,
   sendPasswordResetEmail,
+  sendVerificationStatusEmail,
 } from '../utils/email';
+import { retrieveS3Url, uploadToS3 } from '../utils/imageUpload';
 
 export const SignUp = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -26,6 +28,7 @@ export const SignUp = catchAsync(
 
     //  check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
+    console.log(existingUser)
     if (existingUser) return next(createError(400, 'Email already exists'));
 
     // create user in Supabase
@@ -211,23 +214,40 @@ export const RefreshToken = catchAsync(
 );
 
 export const GetProfile = catchAsync(
-  async (req: Request, res: Response, __: NextFunction) => {
-    const user = req.user;
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
 
-    // const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!userId) {
+      return next(createError(400, 'User ID not found'));
+    }
+
+    // Fetch user with all their verification records
+    const user = await prisma.user.findUnique({ 
+      where: { id: userId },
+      include: { 
+        verifications: {
+          orderBy: { createdAt: 'desc' }  // Latest verifications first
+        }
+      }
+    });
+
+    if (!user) {
+      return next(createError(404, 'User not found'));
+    }
 
     res.status(200).send({
       status: 'success',
       message: 'Profile retrieved successfully',
       data: {
         user: {
-          email: user?.email,
-          fullName: user?.fullName,
-          homeAddress: user?.homeAddress,
-          isVerified: user?.isVerified,
-          picture: user?.picture,
-          skills: user?.skills,
-          aboutMe: user?.aboutMe,
+          email: user.email,
+          fullName: user.fullName,
+          homeAddress: user.homeAddress,
+          isVerified: user.isVerified,
+          picture: user.picture,
+          skills: user.skills,
+          aboutMe: user.aboutMe,
+          verifications: user.verifications,  // 👈 Include all verifications
         },
       },
     });
@@ -371,8 +391,121 @@ export const UpdateProfile = catchAsync(
   },
 );
 
-// export const VerifyDocuments = catchAsync( async(req: Request, res: Response, next: NextFunction) => {
+export const VerifyDocuments = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { state, city, street, gender, documentType } = req.body;
 
-//   // const { state, city, address, gender, IDType, IDImage} = req.body;
+    const file = req.file;
+    if (!file) {
+      return next(createError(400, 'File is required'));
+    }
 
-// })
+    const documentImage = await uploadToS3(file);
+
+    // Find the latest verification record for this user
+    const lastVerification = await prisma.identityVerification.findFirst({
+      where: { userId: req.user!.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Create new identity verification record
+    await prisma.identityVerification.create({
+      data: {
+        userId: req.user!.id,
+        state,
+        street,
+        city,
+        gender,
+        version: (lastVerification?.version ?? 0) + 1, // increments version for new uploads by same user
+        documentType,
+        documentImage,
+      },
+    });
+
+    // The verification is automatically linked to the user via userId
+    // No need to manually update the user.verifications array
+
+    res.status(200).send({
+      status: 'success',
+      message:
+        'Identity verification submitted successfully, verifications may take upto 3 working days, check your mail for updates',
+    });
+  },
+);
+
+export const GetAllIdentityVerifications = catchAsync(
+  async (_: Request, res: Response, next: NextFunction) => {
+    const verifications = await prisma.identityVerification.findMany();
+
+    if (!verifications) {
+      return next(createError(404, 'No identity verifications found'));
+    }
+
+    // Retrieve S3 URLs for document images
+    for (const verification of verifications) {
+      verification.documentImage = await retrieveS3Url(
+        verification.documentImage,
+      );
+    }
+
+    res.status(200).send({
+      status: 'success',
+      message: 'Identity verifications retrieved successfully',
+      length: verifications.length,
+      verifications,
+    });
+  },
+);
+
+// Admin update identity verification status. Currently manual, but will make it automatic
+export const UpdateIdentityVerificationStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { verificationId } = req.params;
+
+    const { status, remarks } = req.body;
+
+
+    // Validate status
+    if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
+      return next(
+        createError(400, 'Invalid status. Must be APPROVED or REJECTED'),
+      );
+    }
+
+    // Find the verification record
+    const verification = await prisma.identityVerification.findUnique({
+      where: { id: verificationId },
+      include: { user: true }, // include user details
+    });
+
+    if (!verification) {
+      return next(createError(404, 'Verification record not found'));
+    }
+
+    if (!verification.user) {
+      return next(createError(404, 'User not found for this verification'));
+    }
+
+    // Update verification status
+    await prisma.identityVerification.update({
+      where: { id: verificationId },
+      data: {
+        status,
+        remarks,
+      },
+    });
+
+    // send email notification to user about status update
+    await sendVerificationStatusEmail(
+      verification.user.fullName,
+      verification.user.email,
+      status,
+      remarks,
+    );
+
+    res.status(200).send({
+      status: 'success',
+      message: `Identity verification status updated to ${status} for user ${verification.user.fullName}. Notification email sent.`,
+    });
+  },
+);

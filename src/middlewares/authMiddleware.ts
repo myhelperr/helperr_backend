@@ -22,26 +22,67 @@ export const authMiddleware = catchAsync(
     // Verify token with Supabase
     const { data, error } = await supabase.auth.getUser(token);
 
-      if (error || !data.user) {
-        return next(createError(401, 'Invalid or expired token'));
-      }
+    if (error || !data.user) {
+      return next(createError(401, 'Invalid or expired token'));
+    }
 
-      // Get user from database
-      const user = await prisma.user.findUnique({
-        where: { id: data.user.id },
-      });
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { id: data.user.id },
+    });
 
-      if (!user) {
-        return next(createError(404, 'User not found'));
-      }
+    if (!user) {
+      return next(createError(404, 'User not found'));
+    }
 
-      if (!user.isVerified) {
-        return next(createError(403, 'Please verify your email first'));
-      }
+    if (!user.isVerified) {
+      return next(createError(403, 'Please verify your email first'));
+    }
 
-      // Attach user to request object
-      req.user = user;
+    // Attach user to request object
+    req.user = user;
 
-      next();
-  }
+    next();
+  },
+);
+
+export const adminAuthMiddleware = catchAsync(
+  async (req: Request, __: Response, next: NextFunction) => {
+    // Get authorization header
+    const authHeader = req.headers['authorization'];
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(createError(401, 'No token provided'));
+    }
+
+    // Extract token
+    const token = authHeader.split(' ')[1];
+
+    if (!token) return next(createError(401, 'Invalid token format'));
+
+    // Verify token with Supabase
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return next(createError(401, 'Invalid or expired token'));
+    }
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { id: data.user.id },
+    });
+
+    if (!user) {
+      return next(createError(404, 'User not found'));
+    }
+
+    if (!user.role || user.role !== 'ADMIN') {
+      return next(createError(403, 'Access denied: Admins only'));
+    }
+
+    // Attach user to request object
+    req.user = user;
+
+    next();
+  },
 );

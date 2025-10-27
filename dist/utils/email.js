@@ -1,33 +1,28 @@
-import { createTransport } from 'nodemailer';
-import { EMAIL_USERNAME, EMAIL_APP_PASSWORD } from '../configs/envConfig';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { mailLog } from '../configs/loggerConfig';
+"use strict";
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cde11614-3f8c-52f2-b42d-ce1ae4161e5f")}catch(e){}}();
 
-// Create email transporter using Gmail service 
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendPasswordResetEmail = exports.resendOtpEmail = exports.sendOtpEmail = void 0;
+const nodemailer_1 = require("nodemailer");
+const envConfig_1 = require("../configs/envConfig");
+const loggerConfig_1 = require("../configs/loggerConfig");
 const createEmailTransporter = () => {
-    return createTransport({
+    return (0, nodemailer_1.createTransport)({
         service: "gmail",
         auth: {
-            user: EMAIL_USERNAME, // Gmail username
-            pass: EMAIL_APP_PASSWORD, // Gmail App Password
+            user: envConfig_1.EMAIL_USERNAME,
+            pass: envConfig_1.EMAIL_APP_PASSWORD,
         },
         tls: {
             rejectUnauthorized: false,
         },
-        // logger: true,
         debug: true,
-    } as SMTPTransport.Options);
+    });
 };
-
-export const sendOtpEmail = async (    
-    name: string,
-    email: string,
-    otpCode: string
-) => {
+const sendOtpEmail = async (name, email, otpCode) => {
     const transporter = createEmailTransporter();
-
     const mailOptions = {
-        from: `Kayode from Helperr <${EMAIL_USERNAME}>`,
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
         to: email,
         subject: "Verify your Helperr account - OTP Code",
         html: `
@@ -139,24 +134,19 @@ export const sendOtpEmail = async (
         </html>
         `,
     };
-
     try {
-       const info = await transporter.sendMail(mailOptions);
-       mailLog.info(`OTP email sent to ${email}: ${info.response}`);
-    } catch (error) {
-        mailLog.error(`Error sending OTP email to ${email}: ${error}`);
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending OTP email to ${email}: ${error}`);
     }
 };
-
-export const resendOtpEmail = async (    
-    name: string,
-    email: string,
-    otpCode: string
-) => {
+exports.sendOtpEmail = sendOtpEmail;
+const resendOtpEmail = async (name, email, otpCode) => {
     const transporter = createEmailTransporter();
-
     const mailOptions = {
-        from: `Kayode from Helperr <${EMAIL_USERNAME}>`,
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
         to: email,
         subject: "Resend OTP Verification Code",
         html: `
@@ -279,20 +269,19 @@ export const resendOtpEmail = async (
         </html>
         `,
     };
-
     try {
-       const info = await transporter.sendMail(mailOptions);
-       mailLog.info(`Resend OTP email sent to ${email}: ${info.response}`);
-    } catch (error) {
-        mailLog.error(`Error sending resend OTP email to ${email}: ${error}`);
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`Resend OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending resend OTP email to ${email}: ${error}`);
     }
 };
-
-export const sendPasswordResetEmail = async (name : string, email: string, otpCode: string) => {
+exports.resendOtpEmail = resendOtpEmail;
+const sendPasswordResetEmail = async (name, email, otpCode) => {
     const transporter = createEmailTransporter();
-
     const mailOptions = {
-        from: `Kayode from Helperr <${EMAIL_USERNAME}>`,
+        from: `Kayode from Helperr <${envConfig_1.EMAIL_USERNAME}>`,
         to: email,
         subject: "Reset Your Helperr Password - OTP Code",
         html: `
@@ -419,255 +408,14 @@ export const sendPasswordResetEmail = async (name : string, email: string, otpCo
         </html>
         `,
     };
-
     try {
-       const info = await transporter.sendMail(mailOptions);
-       mailLog.info(`Password reset OTP email sent to ${email}: ${info.response}`);
-    } catch (error) {
-        mailLog.error(`Error sending password reset email to ${email}: ${error}`);
+        const info = await transporter.sendMail(mailOptions);
+        loggerConfig_1.mailLog.info(`Password reset OTP email sent to ${email}: ${info.response}`);
+    }
+    catch (error) {
+        loggerConfig_1.mailLog.error(`Error sending password reset email to ${email}: ${error}`);
     }
 };
-
-export const sendVerificationStatusEmail = async (
-    name: string, 
-    email: string, 
-    status: 'APPROVED' | 'REJECTED',
-    remarks?: string
-) => {
-    const transporter = createEmailTransporter();
-
-    const isApproved = status === 'APPROVED';
-    
-    const statusConfig = {
-        APPROVED: {
-            subject: '✅ Identity Verification Approved - Welcome to Helperr!',
-            title: 'Verification Approved!',
-            emoji: '🎉',
-            color: '#10b981', // green
-            message: 'Congratulations! Your identity verification has been successfully approved.',
-            details: 'You now have full access to all Helperr features. You can start offering your services or hiring helpers right away!',
-            action: 'Get Started',
-            actionColor: '#10b981'
-        },
-        REJECTED: {
-            subject: '❌ Identity Verification Update - Action Required',
-            title: 'Verification Requires Attention',
-            emoji: '📋',
-            color: '#ef4444', // red
-            message: 'Unfortunately, we were unable to verify your identity with the information provided.',
-            details: 'The documents or information submitted did not meet our verification requirements. Please review and resubmit with valid documentation.',
-            action: 'Resubmit Documents',
-            actionColor: '#6666ff'
-        }
-    };
-
-    const config = statusConfig[status];
-
-    const mailOptions = {
-        from: `Kayode from Helperr <${EMAIL_USERNAME}>`,
-        to: email,
-        subject: config.subject,
-        html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${config.title}</title>
-            <style>
-                body {
-                    margin: 0;
-                    padding: 20px;
-                    font-family: Arial, sans-serif;
-                    background-color: #f5f5f5;
-                    color: #333;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 0 auto;
-                    background-color: #ffffff;
-                    border-radius: 8px;
-                    padding: 30px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                }
-                .logo {
-                    width: 200px;
-                    margin: 0 auto 20px auto;
-                    display: block;
-                }
-                .header {
-                    text-align: center;
-                    margin-bottom: 30px;
-                }
-                .status-badge {
-                    background-color: ${config.color};
-                    color: white;
-                    padding: 10px 20px;
-                    border-radius: 20px;
-                    display: inline-block;
-                    font-size: 14px;
-                    font-weight: bold;
-                    margin-bottom: 20px;
-                }
-                .emoji {
-                    font-size: 48px;
-                    margin: 20px 0;
-                    text-align: center;
-                }
-                .greeting {
-                    font-size: 18px;
-                    margin-bottom: 20px;
-                    text-align: center;
-                }
-                .message {
-                    font-size: 16px;
-                    line-height: 1.6;
-                    margin-bottom: 20px;
-                    text-align: center;
-                    font-weight: 600;
-                }
-                .details {
-                    background-color: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 8px;
-                    font-size: 15px;
-                    line-height: 1.6;
-                    margin: 25px 0;
-                    border-left: 4px solid ${config.color};
-                }
-                .remarks-box {
-                    background-color: #fff3cd;
-                    border: 1px solid #ffeaa7;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin: 20px 0;
-                }
-                .remarks-title {
-                    font-weight: bold;
-                    margin-bottom: 8px;
-                    color: #856404;
-                }
-                .remarks-text {
-                    color: #856404;
-                    font-size: 14px;
-                    line-height: 1.5;
-                }
-                .cta-button {
-                    display: inline-block;
-                    background-color: ${config.actionColor};
-                    color: white !important;
-                    padding: 12px 30px;
-                    border-radius: 5px;
-                    text-decoration: none;
-                    font-weight: bold;
-                    margin: 20px 0;
-                    text-align: center;
-                }
-                .button-container {
-                    text-align: center;
-                    margin: 30px 0;
-                }
-                .info-list {
-                    text-align: left;
-                    margin: 20px 0;
-                    padding-left: 20px;
-                }
-                .info-list li {
-                    margin: 10px 0;
-                    line-height: 1.5;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 30px;
-                    padding-top: 20px;
-                    border-top: 1px solid #eee;
-                    color: #666;
-                    font-size: 14px;
-                }
-                .support-text {
-                    background-color: #e7f3ff;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin: 20px 0;
-                    font-size: 14px;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <img src="https://res.cloudinary.com/dpesanzkk/image/upload/v1757285362/my-helperr-1_xxjt9m.jpg" 
-                         alt="Helperr Logo" class="logo">
-                    <div class="status-badge">${status}</div>
-                </div>
-                
-                <div class="emoji">${config.emoji}</div>
-                
-                <div class="greeting">Hello ${name}!</div>
-                
-                <div class="message">
-                    ${config.message}
-                </div>
-                
-                <div class="details">
-                    ${config.details}
-                </div>
-                
-                ${!isApproved && remarks ? `
-                <div class="remarks-box">
-                    <div class="remarks-title">📝 Reviewer Notes:</div>
-                    <div class="remarks-text">${remarks}</div>
-                </div>
-                ` : ''}
-                
-                ${isApproved ? `
-                <div class="info-list">
-                    <strong>What's Next?</strong>
-                    <ul>
-                        <li>✅ Complete your profile with your skills and services</li>
-                        <li>🔍 Start browsing available jobs or post your own service</li>
-                        <li>💬 Connect with clients or helpers in your area</li>
-                        <li>⭐ Build your reputation with quality work</li>
-                    </ul>
-                </div>
-                ` : `
-                <div class="info-list">
-                    <strong>To resubmit your verification:</strong>
-                    <ul>
-                        <li>📸 Ensure documents are clear and readable</li>
-                        <li>✓ Verify all information matches your ID</li>
-                        <li>📄 Submit valid government-issued identification</li>
-                        <li>💡 Double-check all required fields are filled</li>
-                    </ul>
-                </div>
-                `}
-                
-                <div class="button-container">
-                    <a href="#" class="cta-button">
-                        Go to App
-                    </a>
-                </div>
-                
-                <div class="support-text">
-                    💡 Need help? Our support team is here for you at support@helperr.com
-                </div>
-                
-                <div class="footer">
-                    Thank you for being part of the Helperr community!<br>
-                    Best regards,<br>
-                    The Helperr Team
-                </div>
-            </div>
-        </body>
-        </html>
-        `,
-    };
-
-    try {
-       const info = await transporter.sendMail(mailOptions);
-       mailLog.info(`Verification status (${status}) email sent to ${email}: ${info.response}`);
-    } catch (error) {
-        mailLog.error(`Error sending verification status email to ${email}: ${error}`);
-    }
-};
+exports.sendPasswordResetEmail = sendPasswordResetEmail;
+//# sourceMappingURL=email.js.map
+//# debugId=cde11614-3f8c-52f2-b42d-ce1ae4161e5f

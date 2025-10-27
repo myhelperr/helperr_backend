@@ -47,6 +47,7 @@ model User {
   refreshToken String?
   googleId  String?  @unique
   role      Role     @default(USER)
+  verifications IdentityVerification[]  // One user can have many verifications
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -54,6 +55,32 @@ model User {
   @@index([email])
   @@index([googleId])
   @@map("users")
+}
+
+enum VERIFICATION_STATUS {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model IdentityVerification {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id]) 
+  userId      String   // Foreign key to User
+  state       String
+  city        String
+  street      String
+  gender      String
+  documentType String
+  documentImage String
+  status      VERIFICATION_STATUS   @default(PENDING)
+  remarks     String?
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("identity_verifications")
+  @@index([userId])
 }
 
 // Run the following command to create migration files and update your database schema:
@@ -64,5 +91,3 @@ model User {
 // npm run migrate:dev is recommended during development, and npm run migrate:deploy is recommended for production deployments.
 
 // 'npm run generate' to generate Prisma Client after changing the schema.
-
-

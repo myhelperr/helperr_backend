@@ -44,6 +44,15 @@ const uploadToS3 = async (file: Express.Multer.File) => {
   return uniqueKey;
 };
 
+// Upload multiple files with concurrency control
+const uploadMultipleToS3 = async (files: Express.Multer.File[]) => {
+    const uploadPromises = files.map((file) =>
+        limit(() => uploadToS3(file))
+    );
+
+    return Promise.all(uploadPromises);
+};
+
 const retrieveS3Url = async (fileKey: string): Promise<string> => {
   const command = new GetObjectCommand({
     Bucket: AWS_BUCKET_NAME!, // name of the bucket
@@ -56,10 +65,6 @@ const retrieveS3Url = async (fileKey: string): Promise<string> => {
 };
 
 // Upload multiple files with concurrency control
-// const uploadMultipleToS3 = async (files: Express.Multer.File[]) => {
-//     const uploadPromises = files.map((file) =>
-//         limit(() => uploadToS3(file.buffer, file.originalname, file.mimetype))
-//     );
 
 //     const urls = await Promise.all(uploadPromises);
 //     return urls;
@@ -75,4 +80,4 @@ const deleteFromS3 = async (fileKey: string) => {
   await s3Client.send(command);
 };
 
-export { upload, uploadToS3, deleteFromS3, retrieveS3Url };
+export { upload, uploadToS3, uploadMultipleToS3, deleteFromS3, retrieveS3Url };

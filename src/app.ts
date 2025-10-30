@@ -2,8 +2,9 @@ import express, { Response } from 'express';
 import * as Sentry from '@sentry/node';
 import cors from 'cors';
 
-// import taskRoutes from './routes/taskRoutes';
+import taskRoutes from './routes/taskRoute';
 import authRoutes from './routes/authRoute';
+
 import catchAll404Errors from './middlewares/catchAll404Errors';
 import globalErrorHandler from './middlewares/errorHandler';
 import { connectDatabase } from './configs/prisma';
@@ -37,7 +38,7 @@ app.get('/', async (_, res: Response) => {
 
 app.use('/health', healthCheck);
 app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/tasks', taskRoutes);
 
 app.get('/debug-sentry', (_, __) => {
   throw new Error('My first Sentry error!');
